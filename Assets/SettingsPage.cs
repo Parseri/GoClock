@@ -3,14 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using Newtonsoft.Json;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class SettingsPage : MonoBehaviour {
+    private static SettingsPage instance = null;
     private bool settingsChanged = true;
     public bool SettingsChanged => settingsChanged;
 
     private bool firstOpen;
+    public Transform presetParent;
+    public GameObject presetPrefab;
 
     public InputField mainMinutes;
     public InputField mainSeconds;
@@ -24,13 +28,28 @@ public class SettingsPage : MonoBehaviour {
 
     private ClockLogic.TimeSettings timeSettings;
 
+    private List<ClockLogic.TimeSettings> customPresets;
+
+    public GameObject Dimmer;
+    public TMP_Text deleteButtonText;
+
     void Start() {
+        if (instance == null) instance = this;
+        else return;
         firstOpen = true;
         if (PlayerPrefs.HasKey("SAVED_TIME")) {
             var str = PlayerPrefs.GetString("SAVED_TIME");
             timeSettings = JsonConvert.DeserializeObject<ClockLogic.TimeSettings>(str);
         } else {
             timeSettings = new ClockLogic.TimeSettings(5, 0, 0, 10, 0, 5, 0, 0, 30);
+        }
+        if (PlayerPrefs.HasKey("PRESETS")) {
+            customPresets = JsonConvert.DeserializeObject<List<ClockLogic.TimeSettings>>(PlayerPrefs.GetString("PRESETS"));
+            foreach (var p in customPresets) {
+                CreatePresetButton(p);
+            }
+        } else {
+            customPresets = new List<ClockLogic.TimeSettings>();
         }
         mainMinutes.text = timeSettings.mainMins.ToString();
         mainSeconds.text = timeSettings.mainSecs.ToString();
@@ -43,7 +62,8 @@ public class SettingsPage : MonoBehaviour {
         japSeconds.text = timeSettings.japSecs.ToString();
 
     }
-    public bool CloseSettings() {
+
+    private bool ParseCurrentSettings() {
         float value;
         settingsChanged = false;
         if (float.TryParse(mainMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
@@ -75,14 +95,12 @@ public class SettingsPage : MonoBehaviour {
             return false;
         }
         if (float.TryParse(beepMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
-            settingsChanged = settingsChanged || timeSettings.beepMins != value;
             timeSettings.beepMins = value;
         } else {
             beepMinutes.Select();
             return false;
         }
         if (float.TryParse(beepSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
-            settingsChanged = settingsChanged || timeSettings.beepSecs != value;
             timeSettings.beepSecs = value;
         } else {
             beepSeconds.Select();
@@ -110,15 +128,97 @@ public class SettingsPage : MonoBehaviour {
             japPeriods.Select();
             return false;
         }
-        if (settingsChanged) {
-            Debug.Log("SettingsChanged: pers: " + timeSettings.japPer);
-            var str = JsonConvert.SerializeObject(timeSettings);
-            PlayerPrefs.SetString("SAVED_TIME", str);
-        }
-        settingsChanged |= firstOpen;
-        firstOpen = false;
-        gameObject.SetActive(false);
         return true;
+    }
+
+    public bool CloseSettings() {
+        if (Dimmer.activeSelf) {
+            Dimmer.SetActive(false);
+            deleteButtonText.text = "Delete Preset";
+            return false;
+        }
+        if (ParseCurrentSettings()) {
+            if (settingsChanged) {
+                Debug.Log("SettingsChanged: pers: " + timeSettings.japPer);
+                var str = JsonConvert.SerializeObject(timeSettings);
+                PlayerPrefs.SetString("SAVED_TIME", str);
+            }
+            settingsChanged |= firstOpen;
+            firstOpen = false;
+            gameObject.SetActive(false);
+            return true;
+        } else return false;
+    }
+
+    public void DeletePreset() {
+        if (Dimmer.activeSelf) {
+            Dimmer.SetActive(false);
+            deleteButtonText.text = "Delete Preset";
+        } else {
+            Dimmer.SetActive(true);
+            deleteButtonText.text = "Cancel";
+        }
+    }
+
+    private void ApplyTimeSetting(ClockLogic.TimeSettings setting) {
+        if (Dimmer.activeSelf) {
+            for (int i = 0; i < customPresets.Count; ++i) {
+                if (customPresets[i].IsSame(setting)) {
+                    customPresets.RemoveAt(i);
+                    break;
+                }
+            }
+            DeletePresetButton(setting);
+            SaveCustomPresets();
+        } else {
+            mainMinutes.text = setting.mainMins.ToString();
+            mainSeconds.text = setting.mainSecs.ToString();
+            fischerMinutes.text = setting.fischerMins.ToString();
+            fischerSeconds.text = setting.fischerSecs.ToString();
+            beepMinutes.text = setting.beepMins.ToString();
+            beepSeconds.text = setting.beepSecs.ToString();
+            japPeriods.text = setting.japPer.ToString();
+            japMinutes.text = setting.japMins.ToString();
+            japSeconds.text = setting.japSecs.ToString();
+        }
+    }
+
+    public static void s_ApplyTimeSetting(ClockLogic.TimeSettings setting) {
+        instance.ApplyTimeSetting(setting);
+    }
+
+    public void CreatePreset() {
+        if (ParseCurrentSettings()) {
+            var ts = new ClockLogic.TimeSettings(timeSettings);
+            foreach (var p in customPresets)
+                if (p.IsSame(ts)) return;
+            customPresets.Add(ts);
+            SaveCustomPresets();
+            CreatePresetButton(ts);
+        }
+    }
+
+    private void SaveCustomPresets() {
+        var str = JsonConvert.SerializeObject(customPresets);
+        PlayerPrefs.SetString("PRESETS", str);
+    }
+
+    private void DeletePresetButton(ClockLogic.TimeSettings ts) {
+        for (int i = 0; i < presetParent.childCount; ++i) {
+            var go = presetParent.GetChild(i);
+            var p = go.GetComponent<Preset>();
+            if (p.settings.IsSame(ts)) {
+                Destroy(go.gameObject);
+                return;
+            }
+        }
+    }
+
+    private void CreatePresetButton(ClockLogic.TimeSettings ts) {
+        var go = GameObject.Instantiate(presetPrefab, presetParent);
+        var pr = go.GetComponent<Preset>();
+        pr.settings = ts;
+        pr.title.text = ts.GetNameString();
     }
 
     public ClockLogic.TimeSettings GetTimeSettings() {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
@@ -26,6 +27,10 @@ public class ClockLogic : MonoBehaviour {
         public float japMins;
         [SerializeField]
         public float japSecs;
+        [JsonConstructor]
+        public TimeSettings() {
+        }
+
         public TimeSettings(float mm, float ms, float fm, float fs, float bm, float bs, int jp = 0, float jm = 0, float js = 30) {
             mainMins = mm;
             mainSecs = ms;
@@ -36,6 +41,26 @@ public class ClockLogic : MonoBehaviour {
             japPer = jp;
             japMins = jm;
             japSecs = js;
+        }
+
+        public TimeSettings(TimeSettings other) {
+            mainMins = other.mainMins;
+            mainSecs = other.mainSecs;
+            fischerMins = other.fischerMins;
+            fischerSecs = other.fischerSecs;
+            beepMins = other.beepMins;
+            beepSecs = other.beepSecs;
+            japMins = other.japMins;
+            japSecs = other.japSecs;
+            japPer = other.japPer;
+        }
+
+        public bool IsSame(TimeSettings o) {
+            return mainMins == o.mainMins && mainSecs == o.mainSecs && fischerMins == o.fischerMins && fischerSecs == o.fischerSecs && japPer == o.japPer && japMins == o.japMins && japSecs == o.japSecs;
+        }
+
+        public string GetNameString() {
+            return mainMins.ToString() + ":" + mainSecs.ToString() + "+" + fischerMins + ":" + fischerSecs + "+" + japPer + "x" + japMins + ":" + japSecs;
         }
     }
 
@@ -168,6 +193,9 @@ public class ClockLogic : MonoBehaviour {
         if (!settingsPage.CloseSettings()) return;
         if (settingsPage.SettingsChanged) {
             ResetGame();
+        } else {
+            var settings = settingsPage.GetTimeSettings();
+            beepAfterSeconds = settings.beepSecs + settings.beepMins * 60f;
         }
         if (turnPlayer == TurnPlayer.None) {
             pauseOverlay1.SetActive(false);
