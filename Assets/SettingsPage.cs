@@ -25,6 +25,8 @@ public class SettingsPage : MonoBehaviour {
     public InputField japPeriods;
     public InputField japMinutes;
     public InputField japSeconds;
+    public Toggle manttoniSoundToggle;
+    public bool msEnabled = false;
 
     private ClockLogic.TimeSettings timeSettings;
 
@@ -51,6 +53,8 @@ public class SettingsPage : MonoBehaviour {
         } else {
             customPresets = new List<ClockLogic.TimeSettings>();
         }
+        msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 0) == 1;
+        manttoniSoundToggle.isOn = msEnabled;
         mainMinutes.text = timeSettings.mainMins.ToString();
         mainSeconds.text = timeSettings.mainSecs.ToString();
         fischerMinutes.text = timeSettings.fischerMins.ToString();
@@ -131,6 +135,10 @@ public class SettingsPage : MonoBehaviour {
         return true;
     }
 
+    public static bool MsEnabled() {
+        return instance.msEnabled;
+    }
+
     public bool CloseSettings() {
         if (Dimmer.activeSelf) {
             Dimmer.SetActive(false);
@@ -181,6 +189,11 @@ public class SettingsPage : MonoBehaviour {
             japMinutes.text = setting.japMins.ToString();
             japSeconds.text = setting.japSecs.ToString();
         }
+    }
+
+    public void ManttoniSoundEnabled(bool enabled) {
+        msEnabled = enabled;
+        PlayerPrefs.SetInt("MANTTONI_SOUND", enabled ? 1 : 0);
     }
 
     public static void s_ApplyTimeSetting(ClockLogic.TimeSettings setting) {

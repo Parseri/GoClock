@@ -92,6 +92,10 @@ public class ClockLogic : MonoBehaviour {
     [SerializeField]
     public AudioClip endSound;
     [SerializeField]
+    public AudioClip manttoniSound;
+    private AudioSource manttoniChannel;
+    private float timeSinceLastMove;
+    [SerializeField]
     private AudioMixer mixer;
     [SerializeField]
     private AudioMixerGroup mixerGroup;
@@ -114,6 +118,8 @@ public class ClockLogic : MonoBehaviour {
 
     void Start() {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        manttoniChannel = CreateSource();
+        manttoniChannel.clip = manttoniSound;
         channel = CreateSource();
         channel.clip = beepSound;
         settingsPage.gameObject.SetActive(true);
@@ -207,6 +213,7 @@ public class ClockLogic : MonoBehaviour {
     public void P1ButtonClicked() {
         if (ended || paused) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player1) {
+            if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p2Button.color = Color.yellow;
             p1Button.color = Color.gray;
             if (turnPlayer != TurnPlayer.None) {
@@ -219,12 +226,14 @@ public class ClockLogic : MonoBehaviour {
                 }
             }
             turnPlayer = TurnPlayer.Player2;
+            timeSinceLastMove = Time.realtimeSinceStartup;
         }
     }
 
     public void P2ButtonClicked() {
         if (ended || paused) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player2) {
+            if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p1Button.color = Color.yellow;
             p2Button.color = Color.gray;
             if (turnPlayer != TurnPlayer.None) {
@@ -237,6 +246,7 @@ public class ClockLogic : MonoBehaviour {
                 }
             }
             turnPlayer = TurnPlayer.Player1;
+            timeSinceLastMove = Time.realtimeSinceStartup;
         }
 
     }
