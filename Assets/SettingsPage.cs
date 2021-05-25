@@ -70,56 +70,57 @@ public class SettingsPage : MonoBehaviour {
     private bool ParseCurrentSettings() {
         float value;
         settingsChanged = false;
+        var temp = new ClockLogic.TimeSettings();
         if (float.TryParse(mainMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.mainMins != value;
-            timeSettings.mainMins = value;
+            temp.mainMins = value;
         } else {
             mainMinutes.Select();
             return false;
         }
         if (float.TryParse(mainSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.mainSecs != value;
-            timeSettings.mainSecs = value;
+            temp.mainSecs = value;
         } else {
             mainSeconds.Select();
             return false;
         }
         if (float.TryParse(fischerMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.fischerMins != value;
-            timeSettings.fischerMins = value;
+            temp.fischerMins = value;
         } else {
             fischerMinutes.Select();
             return false;
         }
         if (float.TryParse(fischerSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.fischerSecs != value;
-            timeSettings.fischerSecs = value;
+            temp.fischerSecs = value;
         } else {
             fischerSeconds.Select();
             return false;
         }
         if (float.TryParse(beepMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
-            timeSettings.beepMins = value;
+            temp.beepMins = value;
         } else {
             beepMinutes.Select();
             return false;
         }
         if (float.TryParse(beepSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
-            timeSettings.beepSecs = value;
+            temp.beepSecs = value;
         } else {
             beepSeconds.Select();
             return false;
         }
         if (float.TryParse(japMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.japMins != value;
-            timeSettings.japMins = value;
+            temp.japMins = value;
         } else {
             japMinutes.Select();
             return false;
         }
         if (float.TryParse(japSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.japSecs != value;
-            timeSettings.japSecs = value;
+            temp.japSecs = value;
         } else {
             japSeconds.Select();
             return false;
@@ -127,11 +128,17 @@ public class SettingsPage : MonoBehaviour {
         int val;
         if (int.TryParse(japPeriods.text, NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat, out val)) {
             settingsChanged = settingsChanged || timeSettings.japPer != val;
-            timeSettings.japPer = val;
+            temp.japPer = val;
         } else {
             japPeriods.Select();
             return false;
         }
+        if (temp.japPer > 0 && temp.japMins <= 0 && temp.japSecs <= 0) {
+            japPeriods.Select();
+            return false;
+        }
+        timeSettings = temp;
+
         return true;
     }
 

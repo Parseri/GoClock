@@ -96,6 +96,9 @@ public class ClockLogic : MonoBehaviour {
     private AudioSource manttoniChannel;
     private float timeSinceLastMove;
     [SerializeField]
+    public AudioClip clickSound;
+    private AudioSource clickChannel;
+    [SerializeField]
     private AudioMixer mixer;
     [SerializeField]
     private AudioMixerGroup mixerGroup;
@@ -120,6 +123,8 @@ public class ClockLogic : MonoBehaviour {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         manttoniChannel = CreateSource();
         manttoniChannel.clip = manttoniSound;
+        clickChannel = CreateSource();
+        clickChannel.clip = clickSound;
         channel = CreateSource();
         channel.clip = beepSound;
         settingsPage.gameObject.SetActive(true);
@@ -213,6 +218,7 @@ public class ClockLogic : MonoBehaviour {
     public void P1ButtonClicked() {
         if (ended || paused) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player1) {
+            clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p2Button.color = Color.yellow;
             p1Button.color = Color.gray;
@@ -233,6 +239,7 @@ public class ClockLogic : MonoBehaviour {
     public void P2ButtonClicked() {
         if (ended || paused) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player2) {
+            clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p1Button.color = Color.yellow;
             p2Button.color = Color.gray;
@@ -240,7 +247,7 @@ public class ClockLogic : MonoBehaviour {
                 if (p2Periods == japPeriods) {
                     p2Time += fisherAddition;
                     p2TimeText.text = FormatTime(p2Time);
-                } else if (p2Periods > 0) {
+                } else if (japPeriods > 0 && p2Periods >= 0) {
                     p2Time = japSeconds + japMins * 60f;
                     p2TimeText.text = FormatTime(p2Time);
                 }
