@@ -2,10 +2,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
 public class ClockLogic : MonoBehaviour {
+
+    [Serializable]
+    public class Theme {
+        public Sprite bigButton;
+        public Sprite pauseButton;
+        public Sprite settingsButton;
+        public Sprite resetButton;
+        public string themeName;
+        public Color inactiveColor;
+    }
 
     [Serializable]
     public class TimeSettings {
@@ -74,15 +85,26 @@ public class ClockLogic : MonoBehaviour {
     [SerializeField]
     public Image p2Button;
     [SerializeField]
+    public Image pauseButton;
+    [SerializeField]
+    public Image settingsButton;
+    [SerializeField]
+    public Image resetButton;
+    private Color inactiveColor = Color.gray;
+    [SerializeField]
+    public Image mask1Image;
+    [SerializeField]
+    public Image mask2Image;
+    [SerializeField]
     public SettingsPage settingsPage;
     [SerializeField]
-    public Text p1TimeText;
+    public TMP_Text p1TimeText;
     [SerializeField]
-    public Text p1PeriodsText;
+    public TMP_Text p1PeriodsText;
     [SerializeField]
-    public Text p2TimeText;
+    public TMP_Text p2TimeText;
     [SerializeField]
-    public Text p2PeriodsText;
+    public TMP_Text p2PeriodsText;
     [SerializeField]
     public GameObject pauseOverlay1;
     [SerializeField]
@@ -95,6 +117,7 @@ public class ClockLogic : MonoBehaviour {
     public AudioClip manttoniSound;
     private AudioSource manttoniChannel;
     private float timeSinceLastMove;
+    [SerializeField] private List<Theme> themes;
     [SerializeField]
     public AudioClip clickSound;
     private AudioSource clickChannel;
@@ -138,7 +161,7 @@ public class ClockLogic : MonoBehaviour {
         }
     }
 
-    private void PlayBeep(bool ended) {
+    public void PlayBeep(bool ended) {
         if (ended)
             channel.clip = endSound;
         else
@@ -184,8 +207,8 @@ public class ClockLogic : MonoBehaviour {
         p2TimeText.text = FormatTime(p2Time);
         p2PeriodsText.text = Mathf.Max(p2Periods, 0) + "x(" + FormatTime(japSeconds + japMins * 60f) + ")";
         turnPlayer = TurnPlayer.None;
-        p1Button.color = Color.gray;
-        p2Button.color = Color.gray;
+        p1Button.color = inactiveColor;
+        p2Button.color = inactiveColor;
     }
 
     public void ResetClicked() {
@@ -202,6 +225,8 @@ public class ClockLogic : MonoBehaviour {
 
     public void SettingsClosed() {
         if (!settingsPage.CloseSettings()) return;
+        SetTheme(settingsPage.ThemeName);
+        clickChannel.mute = !settingsPage.ClickSoundEnabled;
         if (settingsPage.SettingsChanged) {
             ResetGame();
         } else {
@@ -212,6 +237,40 @@ public class ClockLogic : MonoBehaviour {
             pauseOverlay1.SetActive(false);
             pauseOverlay2.SetActive(false);
             paused = false;
+            p1Button.color = inactiveColor;
+            p2Button.color = inactiveColor;
+        } else if (turnPlayer == TurnPlayer.Player1)
+            p2Button.color = inactiveColor;
+        else if (turnPlayer == TurnPlayer.Player2)
+            p1Button.color = inactiveColor;
+    }
+
+    private void SetTheme(string theme) {
+        var t = themes.Find(th => th.themeName.Equals(theme));
+        if (t != null) {
+            p1Button.sprite = t.bigButton;
+            p2Button.sprite = t.bigButton;
+            mask1Image.sprite = t.bigButton;
+            mask2Image.sprite = t.bigButton;
+            pauseButton.sprite = t.pauseButton;
+            pauseButton.GetComponentInChildren<Text>().enabled = false;
+            settingsButton.sprite = t.settingsButton;
+            settingsButton.GetComponentInChildren<Text>().enabled = false;
+            resetButton.sprite = t.resetButton;
+            resetButton.GetComponentInChildren<Text>().enabled = false;
+            inactiveColor = t.inactiveColor;
+        } else {
+            p1Button.sprite = null;
+            p2Button.sprite = null;
+            mask1Image.sprite = null;
+            mask2Image.sprite = null;
+            pauseButton.sprite = null;
+            pauseButton.GetComponentInChildren<Text>().enabled = true;
+            settingsButton.sprite = null;
+            settingsButton.GetComponentInChildren<Text>().enabled = true;
+            resetButton.sprite = null;
+            resetButton.GetComponentInChildren<Text>().enabled = true;
+            inactiveColor = Color.gray;
         }
     }
 
@@ -221,7 +280,7 @@ public class ClockLogic : MonoBehaviour {
             clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p2Button.color = Color.yellow;
-            p1Button.color = Color.gray;
+            p1Button.color = inactiveColor;
             if (turnPlayer != TurnPlayer.None) {
                 if (p1Periods == japPeriods) {
                     p1Time += fisherAddition;
@@ -242,7 +301,7 @@ public class ClockLogic : MonoBehaviour {
             clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
             p1Button.color = Color.yellow;
-            p2Button.color = Color.gray;
+            p2Button.color = inactiveColor;
             if (turnPlayer != TurnPlayer.None) {
                 if (p2Periods == japPeriods) {
                     p2Time += fisherAddition;

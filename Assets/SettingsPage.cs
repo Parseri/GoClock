@@ -26,13 +26,20 @@ public class SettingsPage : MonoBehaviour {
     public InputField japMinutes;
     public InputField japSeconds;
     public Toggle manttoniSoundToggle;
-    public bool msEnabled = false;
+    public Toggle clickSoundToggle;
+    public Toggle themeToggle;
+    private bool msEnabled = false;
+    private bool clickSoundEnabled = true;
+    public bool ClickSoundEnabled => clickSoundEnabled;
 
     private ClockLogic.TimeSettings timeSettings;
 
     private List<ClockLogic.TimeSettings> customPresets;
 
     public GameObject Dimmer;
+    private string themeName;
+    public string ThemeName => themeName;
+
     public TMP_Text deleteButtonText;
 
     void Start() {
@@ -53,8 +60,14 @@ public class SettingsPage : MonoBehaviour {
         } else {
             customPresets = new List<ClockLogic.TimeSettings>();
         }
+        if (PlayerPrefs.HasKey("THEME")) {
+            themeName = PlayerPrefs.GetString("THEME");
+        }
+        themeToggle.isOn = !string.IsNullOrEmpty(themeName);
         msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 0) == 1;
         manttoniSoundToggle.isOn = msEnabled;
+        clickSoundEnabled = PlayerPrefs.GetInt("CLICK_SOUND", 0) == 1;
+        clickSoundToggle.isOn = clickSoundEnabled;
         mainMinutes.text = timeSettings.mainMins.ToString();
         mainSeconds.text = timeSettings.mainSecs.ToString();
         fischerMinutes.text = timeSettings.fischerMins.ToString();
@@ -198,9 +211,19 @@ public class SettingsPage : MonoBehaviour {
         }
     }
 
-    public void ManttoniSoundEnabled(bool enabled) {
+    public void EnableManttoniSound(bool enabled) {
         msEnabled = enabled;
         PlayerPrefs.SetInt("MANTTONI_SOUND", enabled ? 1 : 0);
+    }
+
+    public void EnableClickSound(bool enabled) {
+        clickSoundEnabled = enabled;
+        PlayerPrefs.SetInt("CLICK_SOUND", enabled ? 1 : 0);
+    }
+
+    public void EnableBubbleThemeSound(bool enabled) {
+        themeName = enabled ? "bubbleTheme" : null;
+        PlayerPrefs.SetString("THEME", themeName);
     }
 
     public static void s_ApplyTimeSetting(ClockLogic.TimeSettings setting) {
