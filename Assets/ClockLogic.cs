@@ -110,6 +110,10 @@ public class ClockLogic : MonoBehaviour {
     [SerializeField]
     public GameObject pauseOverlay2;
     [SerializeField]
+    public GameObject addTime1;
+    [SerializeField]
+    public GameObject addTime2;
+    [SerializeField]
     public AudioClip beepSound;
     [SerializeField]
     public AudioClip endSound;
@@ -141,6 +145,8 @@ public class ClockLogic : MonoBehaviour {
     private int japPeriods = 0;
     private float japMins = 0;
     private float japSeconds = 0;
+    private const float maxResetTime = 1f; //seconds
+    private float resetClickTimer = -1;
 
     void Start() {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -158,6 +164,8 @@ public class ClockLogic : MonoBehaviour {
             paused = !paused;
             pauseOverlay1.SetActive(paused);
             pauseOverlay2.SetActive(paused);
+            addTime1.SetActive(paused && settingsPage.CanAddTime);
+            addTime2.SetActive(paused && settingsPage.CanAddTime);
         }
     }
 
@@ -199,6 +207,8 @@ public class ClockLogic : MonoBehaviour {
         paused = false;
         pauseOverlay1.SetActive(false);
         pauseOverlay2.SetActive(false);
+        addTime1.SetActive(false);
+        addTime2.SetActive(false);
         ended = false;
         p1Time = initialTime;//5 * 60f;
         p1TimeText.text = FormatTime(p1Time);
@@ -212,7 +222,16 @@ public class ClockLogic : MonoBehaviour {
     }
 
     public void ResetClicked() {
-        ResetGame();
+        if (turnPlayer == TurnPlayer.None) {
+            ResetGame();
+            return;
+        }
+        if (resetClickTimer > 0) {
+            ResetGame();
+            resetButton.color = Color.white;
+            resetClickTimer = -1;
+        } else
+            resetClickTimer = maxResetTime; //seconds
     }
 
     public void SettingsClicked() {
@@ -220,6 +239,8 @@ public class ClockLogic : MonoBehaviour {
         paused = true;
         pauseOverlay1.SetActive(true);
         pauseOverlay2.SetActive(true);
+        addTime1.SetActive(paused && settingsPage.CanAddTime);
+        addTime2.SetActive(paused && settingsPage.CanAddTime);
     }
 
 
@@ -227,6 +248,10 @@ public class ClockLogic : MonoBehaviour {
         if (!settingsPage.CloseSettings()) return;
         SetTheme(settingsPage.ThemeName);
         clickChannel.mute = !settingsPage.ClickSoundEnabled;
+        if (paused) {
+            addTime1.SetActive(settingsPage.CanAddTime);
+            addTime2.SetActive(settingsPage.CanAddTime);
+        }
         if (settingsPage.SettingsChanged) {
             ResetGame();
         } else {
@@ -274,8 +299,25 @@ public class ClockLogic : MonoBehaviour {
         }
     }
 
+    public void AddTime(int player) {
+        if (paused) {
+            if (player == 0) {
+                p1Time += 10;
+                p1TimeText.text = FormatTime(p1Time);
+            } else if (player == 1) {
+                p2Time += 10;
+                p2TimeText.text = FormatTime(p2Time);
+            }
+            if (ended && p1Time > 0 && p2Time > 0) ended = false;
+            if (!ended)
+                if (turnPlayer == TurnPlayer.Player1) p1Button.color = Color.yellow;
+            if (turnPlayer == TurnPlayer.Player2) p2Button.color = Color.yellow;
+        }
+
+    }
+
     public void P1ButtonClicked() {
-        if (ended || paused) return;
+        if (ended || paused || p1Time < 0) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player1) {
             clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
@@ -296,7 +338,7 @@ public class ClockLogic : MonoBehaviour {
     }
 
     public void P2ButtonClicked() {
-        if (ended || paused) return;
+        if (ended || paused || p2Time < 0) return;
         if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player2) {
             clickChannel.Play();
             if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
@@ -317,7 +359,17 @@ public class ClockLogic : MonoBehaviour {
 
     }
 
-    // Update is called once per frame
+    void Update() {
+        if (resetClickTimer >= 0) {
+            resetClickTimer -= Time.deltaTime;
+            resetButton.color = Color.Lerp(Color.red, Color.white, 1 - resetClickTimer / maxResetTime);
+        }
+        if (resetClickTimer <= 0) {
+            resetClickTimer = -1;
+            resetButton.color = Color.white;
+        }
+    }
+
     void FixedUpdate() {
         if (paused || ended) return;
         if (turnPlayer == TurnPlayer.Player1) {

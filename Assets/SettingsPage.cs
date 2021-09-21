@@ -25,12 +25,17 @@ public class SettingsPage : MonoBehaviour {
     public InputField japPeriods;
     public InputField japMinutes;
     public InputField japSeconds;
+    public Toggle canAddTimeToggle;
     public Toggle manttoniSoundToggle;
     public Toggle clickSoundToggle;
     public Toggle themeToggle;
     private bool msEnabled = false;
+    private bool canAddTime = true;
     private bool clickSoundEnabled = true;
+    private bool presetCreated = false;
     public bool ClickSoundEnabled => clickSoundEnabled;
+
+    public bool CanAddTime => canAddTime;
 
     private ClockLogic.TimeSettings timeSettings;
 
@@ -64,6 +69,8 @@ public class SettingsPage : MonoBehaviour {
             themeName = PlayerPrefs.GetString("THEME");
         }
         themeToggle.isOn = !string.IsNullOrEmpty(themeName);
+        canAddTime = PlayerPrefs.GetInt("CAN_ADD_TIME", 0) == 1;
+        canAddTimeToggle.isOn = canAddTime;
         msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 0) == 1;
         manttoniSoundToggle.isOn = msEnabled;
         clickSoundEnabled = PlayerPrefs.GetInt("CLICK_SOUND", 0) == 1;
@@ -171,9 +178,10 @@ public class SettingsPage : MonoBehaviour {
                 var str = JsonConvert.SerializeObject(timeSettings);
                 PlayerPrefs.SetString("SAVED_TIME", str);
             }
-            settingsChanged |= firstOpen;
+            settingsChanged |= firstOpen || presetCreated;
             firstOpen = false;
             gameObject.SetActive(false);
+            presetCreated = false;
             return true;
         } else return false;
     }
@@ -216,6 +224,11 @@ public class SettingsPage : MonoBehaviour {
         PlayerPrefs.SetInt("MANTTONI_SOUND", enabled ? 1 : 0);
     }
 
+    public void EnableCanAddTime(bool enabled) {
+        canAddTime = enabled;
+        PlayerPrefs.SetInt("CAN_ADD_TIME", enabled ? 1 : 0);
+    }
+
     public void EnableClickSound(bool enabled) {
         clickSoundEnabled = enabled;
         PlayerPrefs.SetInt("CLICK_SOUND", enabled ? 1 : 0);
@@ -238,6 +251,7 @@ public class SettingsPage : MonoBehaviour {
             customPresets.Add(ts);
             SaveCustomPresets();
             CreatePresetButton(ts);
+            presetCreated = true;
         }
     }
 
