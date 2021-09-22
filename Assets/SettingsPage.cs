@@ -91,6 +91,7 @@ public class SettingsPage : MonoBehaviour {
         float value;
         settingsChanged = false;
         var temp = new ClockLogic.TimeSettings();
+        if (string.IsNullOrEmpty(mainMinutes.text)) mainMinutes.text = "0";
         if (float.TryParse(mainMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.mainMins != value;
             temp.mainMins = value;
@@ -98,6 +99,7 @@ public class SettingsPage : MonoBehaviour {
             mainMinutes.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(mainSeconds.text)) mainSeconds.text = "0";
         if (float.TryParse(mainSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.mainSecs != value;
             temp.mainSecs = value;
@@ -105,6 +107,7 @@ public class SettingsPage : MonoBehaviour {
             mainSeconds.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(fischerMinutes.text)) fischerMinutes.text = "0";
         if (float.TryParse(fischerMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.fischerMins != value;
             temp.fischerMins = value;
@@ -112,6 +115,7 @@ public class SettingsPage : MonoBehaviour {
             fischerMinutes.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(fischerSeconds.text)) fischerSeconds.text = "0";
         if (float.TryParse(fischerSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.fischerSecs != value;
             temp.fischerSecs = value;
@@ -119,18 +123,21 @@ public class SettingsPage : MonoBehaviour {
             fischerSeconds.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(beepMinutes.text)) beepMinutes.text = "0";
         if (float.TryParse(beepMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             temp.beepMins = value;
         } else {
             beepMinutes.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(beepSeconds.text)) beepSeconds.text = "0";
         if (float.TryParse(beepSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             temp.beepSecs = value;
         } else {
             beepSeconds.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(japMinutes.text)) japMinutes.text = "0";
         if (float.TryParse(japMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.japMins != value;
             temp.japMins = value;
@@ -138,6 +145,7 @@ public class SettingsPage : MonoBehaviour {
             japMinutes.Select();
             return false;
         }
+        if (string.IsNullOrEmpty(japSeconds.text)) japSeconds.text = "0";
         if (float.TryParse(japSeconds.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
             settingsChanged = settingsChanged || timeSettings.japSecs != value;
             temp.japSecs = value;
@@ -146,6 +154,7 @@ public class SettingsPage : MonoBehaviour {
             return false;
         }
         int val;
+        if (string.IsNullOrEmpty(japPeriods.text)) japPeriods.text = "0";
         if (int.TryParse(japPeriods.text, NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat, out val)) {
             settingsChanged = settingsChanged || timeSettings.japPer != val;
             temp.japPer = val;

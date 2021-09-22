@@ -248,10 +248,6 @@ public class ClockLogic : MonoBehaviour {
         if (!settingsPage.CloseSettings()) return;
         SetTheme(settingsPage.ThemeName);
         clickChannel.mute = !settingsPage.ClickSoundEnabled;
-        if (paused) {
-            addTime1.SetActive(settingsPage.CanAddTime);
-            addTime2.SetActive(settingsPage.CanAddTime);
-        }
         if (settingsPage.SettingsChanged) {
             ResetGame();
         } else {
@@ -268,6 +264,8 @@ public class ClockLogic : MonoBehaviour {
             p2Button.color = inactiveColor;
         else if (turnPlayer == TurnPlayer.Player2)
             p1Button.color = inactiveColor;
+        addTime1.SetActive(paused && settingsPage.CanAddTime);
+        addTime2.SetActive(paused && settingsPage.CanAddTime);
     }
 
     private void SetTheme(string theme) {
