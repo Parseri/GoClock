@@ -360,7 +360,7 @@ public class ClockLogic : MonoBehaviour {
     void Update() {
         if (resetClickTimer >= 0) {
             resetClickTimer -= Time.deltaTime;
-            resetButton.color = Color.Lerp(Color.red, Color.white, 1 - resetClickTimer / maxResetTime);
+            resetButton.color = Color.Lerp(Color.green, Color.white, 1 - resetClickTimer / maxResetTime);
         }
         if (resetClickTimer <= 0) {
             resetClickTimer = -1;
