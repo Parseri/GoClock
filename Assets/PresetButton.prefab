@@ -146,7 +146,7 @@ GameObject:
   - component: {fileID: 3492627571233107995}
   - component: {fileID: 3492627571233107972}
   - component: {fileID: 3492627571233107973}
-  - component: {fileID: 3492627571233107974}
+  - component: {fileID: 619404213411019796}
   m_Layer: 5
   m_Name: PresetButton
   m_TagString: Untagged
@@ -256,8 +256,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3492627571233107974}
-        m_TargetAssemblyTypeName: Preset, App
+      - m_Target: {fileID: 619404213411019796}
+        m_TargetAssemblyTypeName: PresetV2, App
         m_MethodName: PresetClicked
         m_Mode: 1
         m_Arguments:
@@ -268,7 +268,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &3492627571233107974
+--- !u!114 &619404213411019796
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -277,18 +277,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 3492627571233107968}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0af76f681a4cd74b9cf0af90a505c9b, type: 3}
+  m_Script: {fileID: 11500000, guid: d524c52e5bc65c44abb1ab3e49cd9b6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  presetName: 5+5
+  presetName: 
   title: {fileID: 3492627569340478133}
-  settings:
+  p1Settings:
     mainSecs: 0
     mainMins: 5
-    fischerSecs: 5
+    fischerSecs: 10
     fischerMins: 0
-    beepSecs: 5
-    beepMins: 0
     japPer: 0
     japMins: 0
     japSecs: 0
+  p2Settings:
+    mainSecs: 0
+    mainMins: 0
+    fischerSecs: 0
+    fischerMins: 0
+    japPer: 0
+    japMins: 0
+    japSecs: 0
+  commonTimeSettings:
+    useSameTime: 1
+    beepSecs: 5
+    beepMins: 0
+  defaultTime: 1

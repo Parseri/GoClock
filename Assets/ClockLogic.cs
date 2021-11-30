@@ -18,6 +18,33 @@ public class ClockLogic : MonoBehaviour {
         public Color inactiveColor;
     }
 
+    [Obsolete("Use per player TimeSettings instead.", false)]
+    [Serializable]
+    public class DeprecatedTimeSettings {
+        [SerializeField]
+        public float mainSecs;
+        [SerializeField]
+        public float mainMins;
+        [SerializeField]
+        public float fischerSecs;
+        [SerializeField]
+        public float fischerMins;
+        [SerializeField]
+        public int japPer;
+        [SerializeField]
+        public float japMins;
+        [SerializeField]
+        public float japSecs;
+        [SerializeField]
+        public float beepSecs;
+        [SerializeField]
+        public float beepMins;
+        [JsonConstructor]
+        public DeprecatedTimeSettings() {
+        }
+    }
+
+
     [Serializable]
     public class TimeSettings {
         [SerializeField]
@@ -29,10 +56,6 @@ public class ClockLogic : MonoBehaviour {
         [SerializeField]
         public float fischerMins;
         [SerializeField]
-        public float beepSecs;
-        [SerializeField]
-        public float beepMins;
-        [SerializeField]
         public int japPer;
         [SerializeField]
         public float japMins;
@@ -42,13 +65,11 @@ public class ClockLogic : MonoBehaviour {
         public TimeSettings() {
         }
 
-        public TimeSettings(float mm, float ms, float fm, float fs, float bm, float bs, int jp = 0, float jm = 0, float js = 30) {
+        public TimeSettings(float mm, float ms, float fm, float fs, int jp = 0, float jm = 0, float js = 30) {
             mainMins = mm;
             mainSecs = ms;
             fischerMins = fm;
             fischerSecs = fs;
-            beepMins = bm;
-            beepSecs = bs;
             japPer = jp;
             japMins = jm;
             japSecs = js;
@@ -59,8 +80,6 @@ public class ClockLogic : MonoBehaviour {
             mainSecs = other.mainSecs;
             fischerMins = other.fischerMins;
             fischerSecs = other.fischerSecs;
-            beepMins = other.beepMins;
-            beepSecs = other.beepSecs;
             japMins = other.japMins;
             japSecs = other.japSecs;
             japPer = other.japPer;
@@ -75,11 +94,36 @@ public class ClockLogic : MonoBehaviour {
         }
     }
 
+    [Serializable]
+    public class CommonTimeSettings {
+        [SerializeField]
+        public bool useSameTime;
+        [SerializeField]
+        public float beepSecs;
+        [SerializeField]
+        public float beepMins;
+        public CommonTimeSettings() {
+            beepMins = 0;
+            beepSecs = 5;
+            useSameTime = true;
+        }
+        public CommonTimeSettings(float bm, float bs, bool useSame) {
+            beepMins = bm;
+            beepSecs = bs;
+            useSameTime = useSame;
+        }
+
+        public bool IsSame(CommonTimeSettings o) {
+            return useSameTime == o.useSameTime && beepMins == o.beepMins && beepSecs == o.beepSecs;
+        }
+    }
+
     private enum TurnPlayer {
         None,
         Player1,
         Player2
     }
+
     [SerializeField]
     public Image p1Button;
     [SerializeField]
@@ -135,18 +179,17 @@ public class ClockLogic : MonoBehaviour {
 
     private float p1Time;
     private float p2Time;
-    private int p1Periods;
-    private int p2Periods;
+    private int p1PeriodsLeft;
+    private int p2PeriodsLeft;
     private bool paused = false;
     private bool ended = false;
-    private float fisherAddition = 5f;
-    private float initialTime = 5 * 60f;
-    private float beepAfterSeconds = 0;
-    private int japPeriods = 0;
-    private float japMins = 0;
-    private float japSeconds = 0;
+    private TimeSettings p1TimeSetting;
+    private TimeSettings p2TimeSetting;
+    private CommonTimeSettings common;
     private const float maxResetTime = 1f; //seconds
     private float resetClickTimer = -1;
+    private int deviceSeed = -1;
+    private float deviceRandom = 0;
 
     void Start() {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -157,6 +200,15 @@ public class ClockLogic : MonoBehaviour {
         channel = CreateSource();
         channel.clip = beepSound;
         settingsPage.gameObject.SetActive(true);
+        if (deviceSeed < 0) {
+            var id = SystemInfo.deviceUniqueIdentifier;
+            foreach (var c in id) {
+                deviceSeed += (int)c;
+            }
+            UnityEngine.Random.InitState(deviceSeed);
+            deviceRandom = UnityEngine.Random.value;
+            Debug.Log("randomSeed: " + deviceSeed + ", deviceRandom: " + deviceRandom);
+        }
     }
 
     public void PauseButtonClicked() {
@@ -170,10 +222,13 @@ public class ClockLogic : MonoBehaviour {
     }
 
     public void PlayBeep(bool ended) {
-        if (ended)
+        if (ended) {
             channel.clip = endSound;
-        else
+            channel.pitch = 1;
+        } else {
             channel.clip = beepSound;
+            channel.pitch = 1 + (deviceRandom * 0.6f - 0.35f);
+        }
         channel.Play();
     }
 
@@ -194,31 +249,53 @@ public class ClockLogic : MonoBehaviour {
 
     private void ResetGame() {
         var settings = settingsPage.GetTimeSettings();
-        initialTime = settings.mainSecs + settings.mainMins * 60f;
-        fisherAddition = settings.fischerSecs + settings.fischerMins * 60f;
-        beepAfterSeconds = settings.beepSecs + settings.beepMins * 60f;
-        japPeriods = settings.japPer;
-        p1Periods = settings.japPer;
-        p2Periods = settings.japPer;
-        p1PeriodsText.gameObject.SetActive(p1Periods != 0);
-        p2PeriodsText.gameObject.SetActive(p2Periods != 0);
-        japMins = settings.japMins;
-        japSeconds = settings.japSecs;
+        common = settings.commonSettings;
+        p1TimeSetting = settings.p1Settings;
+        p2TimeSetting = common.useSameTime ? settings.p1Settings : settings.p2Settings;
+
+        p1PeriodsLeft = p1TimeSetting.japPer;
+        p2PeriodsLeft = p2TimeSetting.japPer;
+        p1PeriodsText.gameObject.SetActive(true);
+        p2PeriodsText.gameObject.SetActive(true);
+
         paused = false;
         pauseOverlay1.SetActive(false);
         pauseOverlay2.SetActive(false);
         addTime1.SetActive(false);
         addTime2.SetActive(false);
         ended = false;
-        p1Time = initialTime;//5 * 60f;
+        p1Time = p1TimeSetting.mainMins * 60f + p1TimeSetting.mainSecs;
         p1TimeText.text = FormatTime(p1Time);
-        p1PeriodsText.text = Mathf.Max(p1Periods, 0) + "x(" + FormatTime(japSeconds + japMins * 60f) + ")";
-        p2Time = initialTime;//5 * 60f;
+        p1PeriodsText.text = GetPlayerTimeTypeText(1);
+
+        p2Time = p2TimeSetting.mainMins * 60f + p2TimeSetting.mainSecs;
         p2TimeText.text = FormatTime(p2Time);
-        p2PeriodsText.text = Mathf.Max(p2Periods, 0) + "x(" + FormatTime(japSeconds + japMins * 60f) + ")";
+        p2PeriodsText.text = GetPlayerTimeTypeText(2);
         turnPlayer = TurnPlayer.None;
         p1Button.color = inactiveColor;
         p2Button.color = inactiveColor;
+    }
+
+    public string GetPlayerTimeTypeText(int player) {
+        string retVal = "";
+        if (player == 1) {
+            if (p1TimeSetting.japPer == 0 && p1TimeSetting.fischerMins == 0 && p1TimeSetting.fischerSecs == 0)
+                return "SD";
+            if (p1TimeSetting.japPer > 0)
+                retVal += Mathf.Max(p1PeriodsLeft, 0) + "x(" + FormatTime(p1TimeSetting.japSecs + p1TimeSetting.japMins * 60f) + ") Left\n";
+            if (p1TimeSetting.fischerMins > 0 || p1TimeSetting.fischerSecs > 0)
+                retVal += "Fischer: " + (p1TimeSetting.fischerMins * 60f + p1TimeSetting.fischerSecs) + "s";
+            return retVal;
+        } else if (player == 2) {
+            if (p2TimeSetting.japPer == 0 && p2TimeSetting.fischerMins == 0 && p2TimeSetting.fischerSecs == 0)
+                return "SD";
+            if (p2TimeSetting.japPer > 0)
+                retVal += Mathf.Max(p2PeriodsLeft, 0) + "x(" + FormatTime(p2TimeSetting.japSecs + p2TimeSetting.japMins * 60f) + ") Left\n";
+            if (p2TimeSetting.fischerMins > 0 || p2TimeSetting.fischerSecs > 0)
+                retVal += "Fischer: " + (p2TimeSetting.fischerMins * 60f + p2TimeSetting.fischerSecs) + "s";
+            return retVal;
+        }
+        return retVal;
     }
 
     public void ResetClicked() {
@@ -248,11 +325,12 @@ public class ClockLogic : MonoBehaviour {
         if (!settingsPage.CloseSettings()) return;
         SetTheme(settingsPage.ThemeName);
         clickChannel.mute = !settingsPage.ClickSoundEnabled;
+
         if (settingsPage.SettingsChanged) {
             ResetGame();
         } else {
             var settings = settingsPage.GetTimeSettings();
-            beepAfterSeconds = settings.beepSecs + settings.beepMins * 60f;
+            common = settings.commonSettings;
         }
         if (turnPlayer == TurnPlayer.None) {
             pauseOverlay1.SetActive(false);
@@ -322,11 +400,11 @@ public class ClockLogic : MonoBehaviour {
             p2Button.color = Color.yellow;
             p1Button.color = inactiveColor;
             if (turnPlayer != TurnPlayer.None) {
-                if (p1Periods == japPeriods) {
-                    p1Time += fisherAddition;
+                if (p1PeriodsLeft == p1TimeSetting.japPer) {
+                    p1Time += (p1TimeSetting.fischerMins * 60f + p1TimeSetting.fischerSecs);
                     p1TimeText.text = FormatTime(p1Time);
-                } else if (japPeriods > 0 && p1Periods >= 0) {
-                    p1Time = japSeconds + japMins * 60f;
+                } else if (p1TimeSetting.japPer > 0 && p1PeriodsLeft >= 0) {
+                    p1Time = p1TimeSetting.japSecs + p1TimeSetting.japMins * 60f;
                     p1TimeText.text = FormatTime(p1Time);
                 }
             }
@@ -343,11 +421,11 @@ public class ClockLogic : MonoBehaviour {
             p1Button.color = Color.yellow;
             p2Button.color = inactiveColor;
             if (turnPlayer != TurnPlayer.None) {
-                if (p2Periods == japPeriods) {
-                    p2Time += fisherAddition;
+                if (p2PeriodsLeft == p2TimeSetting.japPer) {
+                    p2Time += p2TimeSetting.fischerMins * 60f + p2TimeSetting.fischerSecs;
                     p2TimeText.text = FormatTime(p2Time);
-                } else if (japPeriods > 0 && p2Periods >= 0) {
-                    p2Time = japSeconds + japMins * 60f;
+                } else if (p2TimeSetting.japPer > 0 && p2PeriodsLeft >= 0) {
+                    p2Time = p2TimeSetting.japSecs + p2TimeSetting.japMins * 60f;
                     p2TimeText.text = FormatTime(p2Time);
                 }
             }
@@ -374,34 +452,34 @@ public class ClockLogic : MonoBehaviour {
             if (p1Time > 0) {
                 var timeBefore = p1Time;
                 p1Time -= Time.fixedDeltaTime;
-                if (p1Time < beepAfterSeconds && Mathf.FloorToInt(timeBefore) > Mathf.FloorToInt(p1Time))
-                    PlayBeep(p1Time <= 0 && p1Periods == 0);
-            } else if (p1Periods > 0) {
-                p1Periods--;
-                p1Time = japSeconds + japMins * 60f;
+                if (p1Time < (common.beepMins * 60f + common.beepSecs) && Mathf.FloorToInt(timeBefore) > Mathf.FloorToInt(p1Time))
+                    PlayBeep(p1Time <= 0 && p1PeriodsLeft == 0);
+            } else if (p1PeriodsLeft > 0) {
+                p1PeriodsLeft--;
+                p1Time = p1TimeSetting.japSecs + p1TimeSetting.japMins * 60f;
             } else {
                 ended = true;
                 p1Time = 0;
                 p1Button.color = Color.red;
             }
             p1TimeText.text = FormatTime(p1Time);
-            p1PeriodsText.text = Mathf.Max(p1Periods, 0) + "x(" + FormatTime(japSeconds + japMins * 60f) + ")";
+            p1PeriodsText.text = GetPlayerTimeTypeText(1);
         } else if (turnPlayer == TurnPlayer.Player2) {
             if (p2Time > 0) {
                 var timeBefore = p2Time;
                 p2Time -= Time.fixedDeltaTime;
-                if (p2Time < beepAfterSeconds && Mathf.FloorToInt(timeBefore) > Mathf.FloorToInt(p2Time))
-                    PlayBeep(p2Time <= 0 && p2Periods == 0);
-            } else if (p2Periods > 0) {
-                p2Periods--;
-                p2Time = japSeconds + japMins * 60f;
+                if (p2Time < (common.beepMins * 60f + common.beepSecs) && Mathf.FloorToInt(timeBefore) > Mathf.FloorToInt(p2Time))
+                    PlayBeep(p2Time <= 0 && p2PeriodsLeft == 0);
+            } else if (p2PeriodsLeft > 0) {
+                p2PeriodsLeft--;
+                p2Time = p2TimeSetting.japSecs + p2TimeSetting.japMins * 60f;
             } else {
                 ended = true;
                 p2Time = 0;
                 p2Button.color = Color.red;
             }
             p2TimeText.text = FormatTime(p2Time);
-            p2PeriodsText.text = Mathf.Max(p2Periods, 0) + "x(" + FormatTime(japSeconds + japMins * 60f) + ")";
+            p2PeriodsText.text = GetPlayerTimeTypeText(2);
         }
     }
 
