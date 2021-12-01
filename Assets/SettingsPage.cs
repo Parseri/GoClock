@@ -29,9 +29,8 @@ public class SettingsPage : MonoBehaviour {
             japSeconds.text = s.japSecs.ToString();
         }
 
-        public ClockLogic.TimeSettings ParseTimeSettings(ClockLogic.TimeSettings current, out bool settingsChanged) {
+        public ClockLogic.TimeSettings ParseTimeSettings(ClockLogic.TimeSettings current, ref bool settingsChanged) {
             var temp = new ClockLogic.TimeSettings();
-            settingsChanged = false;
             float value;
             if (string.IsNullOrEmpty(mainMinutes.text)) mainMinutes.text = "0";
             if (float.TryParse(mainMinutes.text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out value)) {
@@ -223,12 +222,12 @@ public class SettingsPage : MonoBehaviour {
 
     private bool ParseCurrentSettings() {
         settingsChanged = false;
-        var temp = p1Inputs.ParseTimeSettings(p1TimeSettings, out settingsChanged);
+        var temp = p1Inputs.ParseTimeSettings(p1TimeSettings, ref settingsChanged);
         if (temp != null) {
             p1TimeSettings = temp;
         } else
             return false;
-        temp = p2Inputs.ParseTimeSettings(p2TimeSettings, out settingsChanged);
+        temp = p2Inputs.ParseTimeSettings(p2TimeSettings, ref settingsChanged);
         if (temp != null) {
             p2TimeSettings = temp;
         } else

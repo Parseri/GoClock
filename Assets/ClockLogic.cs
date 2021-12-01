@@ -226,9 +226,22 @@ public class ClockLogic : MonoBehaviour {
             channel.clip = endSound;
             channel.pitch = 1;
         } else {
+            bool isOverride = PlayerPrefs.GetInt("OverrideSoundPitch", 0) == 1;
+            float soundOverride = PlayerPrefs.GetFloat("SoundPitch", 5f);
+            float pitch = isOverride ? soundOverride * 0.1f : deviceRandom;
             channel.clip = beepSound;
-            channel.pitch = 1 + (deviceRandom * 0.6f - 0.35f);
+            channel.pitch = 1 + (0.6f * pitch - 0.35f);
+            channel.Play();
         }
+        channel.Play();
+    }
+
+    public void PlayTestBeep() {
+        bool isOverride = PlayerPrefs.GetInt("OverrideSoundPitch", 0) == 1;
+        float soundOverride = PlayerPrefs.GetFloat("SoundPitch", 5f);
+        float pitch = isOverride ? soundOverride * 0.1f : deviceRandom;
+        channel.clip = beepSound;
+        channel.pitch = 1 + (0.6f * pitch - 0.35f);
         channel.Play();
     }
 
