@@ -125,6 +125,8 @@ public class ClockLogic : MonoBehaviour {
     }
 
     [SerializeField]
+    public RectTransform safeArea;
+    [SerializeField]
     public Image p1Button;
     [SerializeField]
     public Image p2Button;
@@ -188,11 +190,12 @@ public class ClockLogic : MonoBehaviour {
     private CommonTimeSettings common;
     private const float maxResetTime = 1f; //seconds
     private float resetClickTimer = -1;
-    private int deviceSeed = -1;
     private float deviceRandom = 0;
 
     void Start() {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        safeArea.offsetMin = new Vector2(safeArea.offsetMin.x, 0);
+        safeArea.offsetMax = new Vector2(safeArea.offsetMax.x, Screen.safeArea.height - Screen.height);        
         manttoniChannel = CreateSource();
         manttoniChannel.clip = manttoniSound;
         clickChannel = CreateSource();
@@ -200,14 +203,11 @@ public class ClockLogic : MonoBehaviour {
         channel = CreateSource();
         channel.clip = beepSound;
         settingsPage.gameObject.SetActive(true);
-        if (deviceSeed < 0) {
-            var id = SystemInfo.deviceUniqueIdentifier;
-            foreach (var c in id) {
-                deviceSeed += (int)c;
-            }
-            UnityEngine.Random.InitState(deviceSeed);
+        if (PlayerPrefs.HasKey("BEEP_PITCH_OVERRIDE")) {
+            deviceRandom = PlayerPrefs.GetFloat("BEEP_PITCH_OVERRIDE");
+        } else {
             deviceRandom = UnityEngine.Random.value;
-            Debug.Log("randomSeed: " + deviceSeed + ", deviceRandom: " + deviceRandom);
+            PlayerPrefs.SetFloat("BEEP_PITCH_OVERRIDE", deviceRandom);
         }
     }
 
@@ -295,7 +295,7 @@ public class ClockLogic : MonoBehaviour {
             if (p1TimeSetting.japPer == 0 && p1TimeSetting.fischerMins == 0 && p1TimeSetting.fischerSecs == 0)
                 return "SD";
             if (p1TimeSetting.japPer > 0)
-                retVal += Mathf.Max(p1PeriodsLeft, 0) + "x(" + FormatTime(p1TimeSetting.japSecs + p1TimeSetting.japMins * 60f) + ") Left\n";
+                retVal += Mathf.Max(p1PeriodsLeft, 0) + "x(" + FormatTime(p1TimeSetting.japSecs + p1TimeSetting.japMins * 60f) + ") left\n";
             if (p1TimeSetting.fischerMins > 0 || p1TimeSetting.fischerSecs > 0)
                 retVal += "Fischer: " + (p1TimeSetting.fischerMins * 60f + p1TimeSetting.fischerSecs) + "s";
             return retVal;
@@ -303,7 +303,7 @@ public class ClockLogic : MonoBehaviour {
             if (p2TimeSetting.japPer == 0 && p2TimeSetting.fischerMins == 0 && p2TimeSetting.fischerSecs == 0)
                 return "SD";
             if (p2TimeSetting.japPer > 0)
-                retVal += Mathf.Max(p2PeriodsLeft, 0) + "x(" + FormatTime(p2TimeSetting.japSecs + p2TimeSetting.japMins * 60f) + ") Left\n";
+                retVal += Mathf.Max(p2PeriodsLeft, 0) + "x(" + FormatTime(p2TimeSetting.japSecs + p2TimeSetting.japMins * 60f) + ") left\n";
             if (p2TimeSetting.fischerMins > 0 || p2TimeSetting.fischerSecs > 0)
                 retVal += "Fischer: " + (p2TimeSetting.fischerMins * 60f + p2TimeSetting.fischerSecs) + "s";
             return retVal;
