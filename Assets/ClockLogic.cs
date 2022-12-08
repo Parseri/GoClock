@@ -207,8 +207,9 @@ public class ClockLogic : MonoBehaviour {
             deviceRandom = PlayerPrefs.GetFloat("BEEP_PITCH_OVERRIDE");
         } else {
             deviceRandom = UnityEngine.Random.value;
-            PlayerPrefs.SetFloat("BEEP_PITCH_OVERRIDE", deviceRandom);
+            PlayerPrefs.SetFloat("BEEP_PITCH_OVERRIDE", ((int)(deviceRandom*100))/100f);
         }
+        Debug.Log("rand: " + PlayerPrefs.GetFloat("BEEP_PITCH_OVERRIDE"));
     }
 
     public void PauseButtonClicked() {
