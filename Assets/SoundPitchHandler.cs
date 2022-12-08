@@ -10,22 +10,24 @@ public class SoundPitchHandler : MonoBehaviour {
     public Slider soundSlider;
     public TMP_InputField soundInput;
     void Start() {
-        InitValues();
+        StartCoroutine(InitValues());
     }
 
-    void InitValues() {
+    IEnumerator InitValues() {
+        while (!PlayerPrefs.HasKey("BEEP_PITCH_OVERRIDE")) yield return null;
         bool isOverride = PlayerPrefs.GetInt("OverrideSoundPitch", 0) == 1;
         float soundOverride = PlayerPrefs.GetFloat("SoundPitch", 5f);
         overrideSoundToggle.isOn = isOverride;
-        soundSlider.value = isOverride ? soundOverride : 5f;
+        var defPitch = PlayerPrefs.GetFloat("BEEP_PITCH_OVERRIDE", 0.5f)*10f;
+        soundSlider.value = isOverride ? soundOverride : defPitch;
         soundSlider.interactable = isOverride;
-        soundInput.text = isOverride ? soundOverride.ToString() : "5";
+        soundInput.text = isOverride ? soundOverride.ToString() : defPitch.ToString();
         soundInput.interactable = isOverride;
     }
 
     public void OnOverrideToggleChanged(bool enabled) {
         PlayerPrefs.SetInt("OverrideSoundPitch", enabled ? 1 : 0);
-        InitValues();
+        StartCoroutine(InitValues());
     }
 
     public void OnSliderValueChanged(float value) {
