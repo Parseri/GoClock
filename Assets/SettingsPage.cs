@@ -203,13 +203,16 @@ public class SettingsPage : MonoBehaviour {
         }
         if (PlayerPrefs.HasKey("THEME")) {
             themeName = PlayerPrefs.GetString("THEME");
+        }else {
+            themeName = "bubbleTheme";
+            PlayerPrefs.SetString("THEME", themeName);
         }
         themeToggle.isOn = !string.IsNullOrEmpty(themeName);
-        canAddTime = PlayerPrefs.GetInt("CAN_ADD_TIME", 0) == 1;
+        canAddTime = PlayerPrefs.GetInt("CAN_ADD_TIME", 1) == 1;
         canAddTimeToggle.isOn = canAddTime;
-        msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 0) == 1;
+        msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 1) == 1;
         manttoniSoundToggle.isOn = msEnabled;
-        clickSoundEnabled = PlayerPrefs.GetInt("CLICK_SOUND", 0) == 1;
+        clickSoundEnabled = PlayerPrefs.GetInt("CLICK_SOUND", 1) == 1;
         clickSoundToggle.isOn = clickSoundEnabled;
         p1Inputs.InitValues(p1TimeSettings);
         p2Inputs.InitValues(p2TimeSettings);
