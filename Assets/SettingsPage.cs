@@ -221,6 +221,7 @@ public class SettingsPage : MonoBehaviour {
         p2Inputs.inputParent.SetActive(!commonTimeSettings.useSameTime);
         beepMinutes.text = commonTimeSettings.beepMins.ToString();
         beepSeconds.text = commonTimeSettings.beepSecs.ToString();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(presetParent.GetComponent<RectTransform>());
     }
 
     private bool ParseCurrentSettings() {
