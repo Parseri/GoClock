@@ -4,7 +4,6 @@ using System.Globalization;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Parseri.GoClock

@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
 public class VersionChecker : MonoBehaviour {
     /*private const string LATEST_URL = "https://api.github.com/repos/Parseri/Kellopeli/releases/latest";
