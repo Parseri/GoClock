@@ -43,8 +43,7 @@ namespace Parseri.GoClock
 
         public void OnPitchEntered(string value)
         {
-            float parsedValue;
-            if (float.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out parsedValue))
+            if (float.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out float parsedValue))
             {
                 if (parsedValue >= 10f) parsedValue = 10;
                 if (parsedValue < 0f) parsedValue = 0;

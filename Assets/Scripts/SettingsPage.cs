@@ -186,9 +186,8 @@ namespace Parseri.GoClock
         public GameObject presetPrefab;
         public Toggle useSameTimeSettingToggle;
         public Toggle canAddTimeToggle;
-        public Toggle manttoniSoundToggle;
+        public Toggle wroomSoundToggle;
         public Toggle clickSoundToggle;
-        public Toggle themeToggle;
         public TMP_InputField beepMinutes;
         public TMP_InputField beepSeconds;
 
@@ -208,8 +207,6 @@ namespace Parseri.GoClock
         private List<TimePreset> customPresets;
 
         public GameObject Dimmer;
-        private string themeName;
-        public string ThemeName => themeName;
 
         public TMP_Text deleteButtonText;
 
@@ -262,20 +259,16 @@ namespace Parseri.GoClock
             {
                 customPresets = new List<TimePreset>();
             }
-            /*if (PlayerPrefs.HasKey("THEME"))
+            if (!PlayerPrefs.HasKey("MASTER_VOLUME"))
             {
-                themeName = PlayerPrefs.GetString("THEME");
+                PlayerPrefs.SetFloat("MASTER_VOLUME", 1f);
             }
-            else
-            {
-                PlayerPrefs.SetString("THEME", themeName);
-            }*/
-            themeName = "bubbleTheme";
-            //themeToggle.isOn = !string.IsNullOrEmpty(themeName);
+
+            AudioManager.SetMasterVolume(PlayerPrefs.GetFloat("MASTER_VOLUME", 1f));
             canAddTime = PlayerPrefs.GetInt("CAN_ADD_TIME", 1) == 1;
             canAddTimeToggle.isOn = canAddTime;
             msEnabled = PlayerPrefs.GetInt("MANTTONI_SOUND", 1) == 1;
-            manttoniSoundToggle.isOn = msEnabled;
+            wroomSoundToggle.isOn = msEnabled;
             clickSoundEnabled = PlayerPrefs.GetInt("CLICK_SOUND", 1) == 1;
             clickSoundToggle.isOn = clickSoundEnabled;
             p1Inputs.InitValues(p1TimeSettings);
@@ -443,12 +436,6 @@ namespace Parseri.GoClock
         {
             clickSoundEnabled = enabled;
             PlayerPrefs.SetInt("CLICK_SOUND", enabled ? 1 : 0);
-        }
-
-        public void EnableBubbleThemeSound(bool enabled)
-        {
-            themeName = enabled ? "bubbleTheme" : null;
-            PlayerPrefs.SetString("THEME", themeName);
         }
 
         public static void ApplyPreset(TimePreset setting)

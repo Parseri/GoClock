@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace Parseri.GoClock
@@ -141,60 +140,22 @@ namespace Parseri.GoClock
             Player2
         }
 
-        [SerializeField]
-        public RectTransform safeArea;
-        [SerializeField]
-        public Image p1Button;
-        [SerializeField]
-        public Image p2Button;
-        [SerializeField]
-        public Image pauseButton;
-        [SerializeField]
-        public Image settingsButton;
-        [SerializeField]
-        public Image resetButton;
-        private Color inactiveColor = Color.gray;
-        [SerializeField]
-        public Image mask1Image;
-        [SerializeField]
-        public Image mask2Image;
-        [SerializeField]
-        public SettingsPage settingsPage;
-        [SerializeField]
-        public TMP_Text p1TimeText;
-        [SerializeField]
-        public TMP_Text p1PeriodsText;
-        [SerializeField]
-        public TMP_Text p2TimeText;
-        [SerializeField]
-        public TMP_Text p2PeriodsText;
-        [SerializeField]
-        public GameObject pauseOverlay1;
-        [SerializeField]
-        public GameObject pauseOverlay2;
-        [SerializeField]
-        public GameObject addTime1;
-        [SerializeField]
-        public GameObject addTime2;
-        [SerializeField]
-        public AudioClip beepSound;
-        [SerializeField]
-        public AudioClip endSound;
-        [SerializeField]
-        public AudioClip manttoniSound;
-        private AudioSource manttoniChannel;
+        [SerializeField] public RectTransform safeArea;
+        [SerializeField] public Image p1Button;
+        [SerializeField] public Image p2Button;
+        [SerializeField] public Image resetButton;
+        [SerializeField] private Color inactiveColor = Color.gray;
+        [SerializeField] public SettingsPage settingsPage;
+        [SerializeField] public TMP_Text p1TimeText;
+        [SerializeField] public TMP_Text p1PeriodsText;
+        [SerializeField] public TMP_Text p2TimeText;
+        [SerializeField] public TMP_Text p2PeriodsText;
+        [SerializeField] public GameObject pauseOverlay1;
+        [SerializeField] public GameObject pauseOverlay2;
+        [SerializeField] public GameObject addTime1;
+        [SerializeField] public GameObject addTime2;
         private float timeSinceLastMove;
-        [SerializeField] private List<Theme> themes;
-        [SerializeField]
-        public AudioClip clickSound;
-        private AudioSource clickChannel;
-        [SerializeField]
-        private AudioMixer mixer;
-        [SerializeField]
-        private AudioMixerGroup mixerGroup;
-        private AudioSource channel;
         private TurnPlayer turnPlayer = TurnPlayer.None;
-
 
         private float p1Time;
         private float p2Time;
@@ -214,12 +175,6 @@ namespace Parseri.GoClock
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             safeArea.offsetMin = new Vector2(safeArea.offsetMin.x, 0);
             safeArea.offsetMax = new Vector2(safeArea.offsetMax.x, Screen.safeArea.height - Screen.height);
-            manttoniChannel = CreateSource();
-            manttoniChannel.clip = manttoniSound;
-            clickChannel = CreateSource();
-            clickChannel.clip = clickSound;
-            channel = CreateSource();
-            channel.clip = beepSound;
             settingsPage.gameObject.SetActive(true);
             if (PlayerPrefs.HasKey("BEEP_PITCH_OVERRIDE"))
             {
@@ -238,6 +193,10 @@ namespace Parseri.GoClock
             if (turnPlayer != TurnPlayer.None)
             {
                 paused = !paused;
+                if (paused)
+                {
+                    AudioManager.StopAllSounds();
+                }
                 pauseOverlay1.SetActive(paused);
                 pauseOverlay2.SetActive(paused);
                 addTime1.SetActive(paused && settingsPage.CanAddTime);
@@ -249,45 +208,21 @@ namespace Parseri.GoClock
         {
             if (ended)
             {
-                channel.clip = endSound;
-                channel.pitch = 1;
+                AudioManager.PlaySound(AudioManager.AudioType.End);
             }
             else
             {
                 bool isOverride = PlayerPrefs.GetInt("OverrideSoundPitch", 0) == 1;
                 float soundOverride = PlayerPrefs.GetFloat("SoundPitch", 5f);
                 float pitch = isOverride ? soundOverride * 0.1f : deviceRandom;
-                channel.clip = beepSound;
-                channel.pitch = 1 + (0.6f * pitch - 0.35f);
-                channel.Play();
+                pitch = 1 + (0.6f * pitch - 0.35f);
+                AudioManager.PlaySound(AudioManager.AudioType.Beep, pitch);
             }
-            channel.Play();
         }
 
         public void PlayTestBeep()
         {
-            bool isOverride = PlayerPrefs.GetInt("OverrideSoundPitch", 0) == 1;
-            float soundOverride = PlayerPrefs.GetFloat("SoundPitch", 5f);
-            float pitch = isOverride ? soundOverride * 0.1f : deviceRandom;
-            channel.clip = beepSound;
-            channel.pitch = 1 + (0.6f * pitch - 0.35f);
-            channel.Play();
-        }
-
-        internal AudioSource CreateSource()
-        {
-            GameObject g = new GameObject();
-            g.name = "AudioSource";
-            g.transform.parent = gameObject.transform;
-            g.transform.localPosition = Vector3.zero;
-            g.transform.localRotation = Quaternion.identity;
-            g.transform.localScale = Vector3.one;
-
-            var s = g.AddComponent<AudioSource>();
-            s.volume = 1.0F;
-            s.spatialBlend = 0.0F;
-            s.outputAudioMixerGroup = mixerGroup;
-            return s;
+            PlayBeep(false);
         }
 
         private void ResetGame()
@@ -356,6 +291,7 @@ namespace Parseri.GoClock
             if (resetClickTimer > 0)
             {
                 ResetGame();
+                AudioManager.StopAllSounds();
                 resetButton.color = Color.white;
                 resetClickTimer = -1;
             }
@@ -365,6 +301,7 @@ namespace Parseri.GoClock
 
         public void SettingsClicked()
         {
+            AudioManager.StopAllSounds();
             settingsPage.gameObject.SetActive(true);
             paused = true;
             pauseOverlay1.SetActive(true);
@@ -377,8 +314,7 @@ namespace Parseri.GoClock
         {
             if (!settingsPage.CloseSettings()) return;
 
-            SetTheme(settingsPage.ThemeName);
-            clickChannel.mute = !settingsPage.ClickSoundEnabled;
+            AudioManager.MuteChannel(AudioManager.AudioType.Click, !settingsPage.ClickSoundEnabled);
 
             if (settingsPage.SettingsChanged)
             {
@@ -405,39 +341,6 @@ namespace Parseri.GoClock
             addTime2.SetActive(paused && settingsPage.CanAddTime);
         }
 
-        private void SetTheme(string theme)
-        {
-            var t = themes.Find(th => th.themeName.Equals(theme));
-            if (t != null)
-            {
-                p1Button.sprite = t.bigButton;
-                p2Button.sprite = t.bigButton;
-                mask1Image.sprite = t.bigButton;
-                mask2Image.sprite = t.bigButton;
-                pauseButton.sprite = t.pauseButton;
-                pauseButton.GetComponentInChildren<Text>().enabled = false;
-                settingsButton.sprite = t.settingsButton;
-                settingsButton.GetComponentInChildren<Text>().enabled = false;
-                resetButton.sprite = t.resetButton;
-                resetButton.GetComponentInChildren<Text>().enabled = false;
-                inactiveColor = t.inactiveColor;
-            }
-            else
-            {
-                p1Button.sprite = null;
-                p2Button.sprite = null;
-                mask1Image.sprite = null;
-                mask2Image.sprite = null;
-                pauseButton.sprite = null;
-                pauseButton.GetComponentInChildren<Text>().enabled = true;
-                settingsButton.sprite = null;
-                settingsButton.GetComponentInChildren<Text>().enabled = true;
-                resetButton.sprite = null;
-                resetButton.GetComponentInChildren<Text>().enabled = true;
-                inactiveColor = Color.gray;
-            }
-        }
-
         public void AddTime(int player)
         {
             if (paused)
@@ -460,20 +363,26 @@ namespace Parseri.GoClock
 
         }
 
+
+        //TODO: Combine logic for both players
         public void P1ButtonClicked()
         {
             if (ended || paused || p1Time < 0) return;
             if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player1)
             {
-                clickChannel.Play();
-                if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
+                AudioManager.PlaySound(AudioManager.AudioType.Click);
+                if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1)
+                {
+                    AudioManager.PlaySound(AudioManager.AudioType.Wroom);
+                }
+
                 p2Button.color = Color.yellow;
                 p1Button.color = inactiveColor;
                 if (turnPlayer != TurnPlayer.None)
                 {
                     if (p1PeriodsLeft == p1TimeSetting.japPer)
                     {
-                        p1Time += (p1TimeSetting.fischerMins * 60f + p1TimeSetting.fischerSecs);
+                        p1Time += p1TimeSetting.fischerMins * 60f + p1TimeSetting.fischerSecs;
                         p1TimeText.text = FormatTime(p1Time);
                     }
                     else if (p1TimeSetting.japPer > 0 && p1PeriodsLeft >= 0)
@@ -492,8 +401,12 @@ namespace Parseri.GoClock
             if (ended || paused || p2Time < 0) return;
             if (turnPlayer == TurnPlayer.None || turnPlayer == TurnPlayer.Player2)
             {
-                clickChannel.Play();
-                if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1) manttoniChannel.Play();
+                AudioManager.PlaySound(AudioManager.AudioType.Click);
+                if (SettingsPage.MsEnabled() && Time.realtimeSinceStartup - timeSinceLastMove < 1)
+                {
+                    AudioManager.PlaySound(AudioManager.AudioType.Wroom);
+                }
+
                 p1Button.color = Color.yellow;
                 p2Button.color = inactiveColor;
                 if (turnPlayer != TurnPlayer.None)
